@@ -1,5 +1,12 @@
 export type REQUESTS = {
   REG: string;
+  CREATE_ROOM: string;
+  ADD_USER_TO_ROOM: string;
+};
+
+export type RESPONSES = {
+  REG: string;
+  UPDATE_ROOM: string;
 };
 
 export type Request = {
@@ -9,10 +16,12 @@ export type Request = {
 };
 
 export type Player = {
-  name?: string;
+  name: string;
   password?: string;
-  connectionId?: string;
+  index: string;
 };
+
+export type PlayersDb = Player[];
 
 export type PlayerRequestBody = {
   name: string;
@@ -21,4 +30,17 @@ export type PlayerRequestBody = {
 
 export type Client = {
   clientConnectionId: string;
+};
+
+export type Room = {
+  roomId: string;
+  roomUsers: Player[] | null;
+};
+
+export type RoomsDb = Room[];
+
+export type UpdateRoomsResponse = {
+  type: string;
+  data: string;
+  id: number;
 };

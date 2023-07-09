@@ -1,7 +1,14 @@
-import { REQUESTS } from "./types/types";
+import { REQUESTS, RESPONSES } from "./types/types";
 
 export const AVAILABLE_REQUESTS: REQUESTS = {
   REG: "reg",
+  CREATE_ROOM: "create_room",
+  ADD_USER_TO_ROOM: "add_user_to_room",
+};
+
+export const AVAILABLE_RESPONSES: RESPONSES = {
+  REG: "reg",
+  UPDATE_ROOM: "update_room",
 };
 
 export const ERROR_MESSAGES = {
