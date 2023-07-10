@@ -7,7 +7,6 @@ import { errorHandler } from "../../utils";
 import { addClient, removeClient } from "../../db/dbClients";
 import { requestHandler } from "../handlers/requestHandler";
 import { deletePlayer } from "../../db/dbPlayers";
-import { deleteRoom } from "../../db/dbRooms";
 
 export default function connectionController(ws: WebSocket) {
   const clientConnectionId: string = randomBytes(16).toString("hex");
@@ -36,7 +35,7 @@ export default function connectionController(ws: WebSocket) {
   ws.on("close", () => {
     removeClient({ clientConnectionId });
     deletePlayer(clientConnectionId);
-    deleteRoom(clientConnectionId);
+    // deleteRoom(clientConnectionId);
     console.log("Connection closed.");
   });
 }

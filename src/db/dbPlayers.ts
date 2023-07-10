@@ -2,6 +2,7 @@ import WebSocket from "ws";
 
 import { Player, Request, PlayerRequestBody, PlayersDb } from "types/types";
 import { ERROR_MESSAGES } from "../constatnts";
+import { updateRooms, updateRoomsOnPlayerDelete } from "./dbRooms";
 
 export let players: PlayersDb = [];
 
@@ -19,12 +20,12 @@ export function createPlayer(ws: WebSocket, clientConnectionId: string, request:
   if (!isValid) {
     response = {
       type: request.type,
-      data: {
+      data: JSON.stringify({
         name: "",
         index: "",
         error: true,
         errorText: ERROR_MESSAGES.INVALID_REQUEST_BODY,
-      },
+      }),
     };
 
     console.log("Response: ", JSON.stringify(response));
@@ -37,6 +38,7 @@ export function createPlayer(ws: WebSocket, clientConnectionId: string, request:
     name: requestBody.name,
     password: requestBody.password,
     index: clientConnectionId,
+    ws,
   };
 
   players.push(newPlayer);
@@ -55,12 +57,14 @@ export function createPlayer(ws: WebSocket, clientConnectionId: string, request:
   console.log("Response: ", JSON.stringify(response));
 
   ws.send(JSON.stringify(response));
+  updateRooms();
 }
 
 export function deletePlayer(clientConnectionId: string): void {
   players = players.filter((player) => {
     if (player.index !== clientConnectionId) return player;
   });
+  updateRoomsOnPlayerDelete(clientConnectionId);
 }
 
 export function getPlayerById(id: string): Player | void {

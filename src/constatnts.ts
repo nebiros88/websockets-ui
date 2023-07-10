@@ -9,6 +9,7 @@ export const AVAILABLE_REQUESTS: REQUESTS = {
 export const AVAILABLE_RESPONSES: RESPONSES = {
   REG: "reg",
   UPDATE_ROOM: "update_room",
+  CREATE_GAME: "create_game",
 };
 
 export const ERROR_MESSAGES = {
