@@ -4,12 +4,14 @@ export type REQUESTS = {
   REG: string;
   CREATE_ROOM: string;
   ADD_USER_TO_ROOM: string;
+  ADD_SHIPS: string;
 };
 
 export type RESPONSES = {
   REG: string;
   UPDATE_ROOM: string;
   CREATE_GAME: string;
+  START_GAME: string;
 };
 
 export type Request = {
@@ -52,4 +54,29 @@ export type UpdateRoomsResponse = {
 
 export type Game = {
   idGame: number | string;
+  shipsPositions?: ShipPositions[];
+};
+
+export type Ship = {
+  position: {
+    x: number;
+    y: number;
+  };
+  direction: boolean;
+  length: number;
+  type: ShipType;
+};
+
+export enum ShipType {
+  small,
+  medium,
+  large,
+  huge,
+}
+
+export type Ships = Ship[];
+
+export type ShipPositions = {
+  ships: Ships;
+  indexPlayer: string;
 };

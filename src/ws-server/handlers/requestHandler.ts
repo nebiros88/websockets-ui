@@ -3,7 +3,7 @@ import WebSocket from "ws";
 
 import { AVAILABLE_REQUESTS } from "../../constatnts";
 import { createPlayer } from "../../db/dbPlayers";
-import { createRoom, addUserToRoom } from "../../db/dbRooms";
+import { createRoom, addUserToRoom, addShips } from "../../db/dbRooms";
 
 export function requestHandler(ws: WebSocket, clientConnectionId: string, request: Request): void {
   switch (request.type) {
@@ -15,6 +15,9 @@ export function requestHandler(ws: WebSocket, clientConnectionId: string, reques
       break;
     case AVAILABLE_REQUESTS.ADD_USER_TO_ROOM:
       addUserToRoom(clientConnectionId, request);
+      break;
+    case AVAILABLE_REQUESTS.ADD_SHIPS:
+      addShips(request);
       break;
   }
 }

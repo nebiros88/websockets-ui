@@ -1,4 +1,4 @@
-import { Room, RoomsDb, Player, Request } from "../types/types";
+import { Room, RoomsDb, Player, Request, Ships, ShipPositions } from "../types/types";
 import { getPlayerById } from "./dbPlayers";
 import { AVAILABLE_RESPONSES } from "../constatnts";
 import { sendResponseForAllClients, sendResponseForClients } from "../utils";
@@ -76,4 +76,33 @@ function createGame(indexRoom: string): void {
   };
 
   sendResponseForClients(rooms[idx]?.roomUsers as Player[], AVAILABLE_RESPONSES.CREATE_GAME, { idGame: indexRoom });
+}
+
+// ADD_SHIPS
+
+export function addShips(request: Request): void {
+  const parsedRequest = JSON.parse(request.data);
+  const { gameId, indexPlayer } = parsedRequest;
+
+  const ships: Ships = [...parsedRequest.ships] as Ships;
+
+  const roomIndex: number | undefined = rooms.findIndex((room) => room.game?.idGame === gameId);
+
+  rooms[roomIndex]!.game!.shipsPositions?.push({
+    ships: [...ships],
+    indexPlayer,
+  });
+
+  if (rooms[roomIndex]!.game!.shipsPositions!.length === 2) {
+    const roomId = rooms[roomIndex]?.roomId;
+    startGame(roomId as string);
+  }
+}
+
+function startGame(roomId: string): void {
+  const room = rooms.find((room) => room.roomId === roomId) as Room;
+  const { roomUsers } = room;
+  const shipsPositions = room.game?.shipsPositions as ShipPositions[];
+
+  sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.START_GAME, shipsPositions as ShipPositions[]);
 }
