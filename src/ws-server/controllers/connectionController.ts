@@ -35,7 +35,6 @@ export default function connectionController(ws: WebSocket) {
   ws.on("close", () => {
     removeClient({ clientConnectionId });
     deletePlayer(clientConnectionId);
-    // deleteRoom(clientConnectionId);
     console.log("Connection closed.");
   });
 }

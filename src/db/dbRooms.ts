@@ -1,9 +1,9 @@
-import { Room, RoomsDb, Player, Request, Ships, ShipPositions } from "../types/types";
+import { Room, Player, Request, Ships, ShipPositions } from "../types/types";
 import { getPlayerById } from "./dbPlayers";
 import { AVAILABLE_RESPONSES } from "../constatnts";
 import { sendResponseForAllClients, sendResponseForClients } from "../utils";
 
-export let rooms: RoomsDb = [];
+export let rooms: Room[] = [];
 
 export function createRoom(clientConnectionId: string) {
   const { name, index } = getPlayerById(clientConnectionId) as Player;
@@ -15,6 +15,10 @@ export function createRoom(clientConnectionId: string) {
         index,
       },
     ],
+    game: {
+      idGame: clientConnectionId,
+      shipsPositions: []
+    }
   };
 
   rooms.push(newRoom as Room);
@@ -48,7 +52,14 @@ export function deleteRoom(clientConnectionId: string): void {
 export function updateRooms(): void {
   const response = {
     type: AVAILABLE_RESPONSES.UPDATE_ROOM,
-    data: JSON.stringify([...rooms]),
+    data: JSON.stringify(
+      rooms.map((room: Room) => {
+        return {
+          roomId: room.roomId,
+          roomUsers: room.roomUsers
+        }
+      })
+    ),
     id: 0,
   };
 
@@ -70,11 +81,6 @@ export function updateRoomsOnPlayerDelete(id: string) {
 
 function createGame(indexRoom: string): void {
   const idx = rooms.findIndex((room) => room.roomId === indexRoom);
-
-  rooms[idx]!.game = {
-    idGame: indexRoom,
-  };
-
   sendResponseForClients(rooms[idx]?.roomUsers as Player[], AVAILABLE_RESPONSES.CREATE_GAME, { idGame: indexRoom });
 }
 
@@ -85,15 +91,14 @@ export function addShips(request: Request): void {
   const { gameId, indexPlayer } = parsedRequest;
 
   const ships: Ships = [...parsedRequest.ships] as Ships;
-
   const roomIndex: number | undefined = rooms.findIndex((room) => room.game?.idGame === gameId);
 
-  rooms[roomIndex]!.game!.shipsPositions?.push({
+  rooms[roomIndex]?.game.shipsPositions.push({
     ships: [...ships],
     indexPlayer,
-  });
+  })
 
-  if (rooms[roomIndex]!.game!.shipsPositions!.length === 2) {
+  if (rooms[roomIndex]?.game.shipsPositions.length === 2) {
     const roomId = rooms[roomIndex]?.roomId;
     startGame(roomId as string);
   }

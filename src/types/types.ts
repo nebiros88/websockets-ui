@@ -41,10 +41,8 @@ export type Client = {
 export type Room = {
   roomId: string;
   roomUsers: Player[] | null;
-  game?: Game | null;
+  game: Game;
 };
-
-export type RoomsDb = Room[];
 
 export type UpdateRoomsResponse = {
   type: string;
@@ -54,7 +52,7 @@ export type UpdateRoomsResponse = {
 
 export type Game = {
   idGame: number | string;
-  shipsPositions?: ShipPositions[];
+  shipsPositions: ShipPositions[];
 };
 
 export type Ship = {
