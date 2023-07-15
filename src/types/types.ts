@@ -12,6 +12,7 @@ export type RESPONSES = {
   UPDATE_ROOM: string;
   CREATE_GAME: string;
   START_GAME: string;
+  TURN: string;
 };
 
 export type Request = {
@@ -53,6 +54,7 @@ export type UpdateRoomsResponse = {
 export type Game = {
   idGame: number | string;
   shipsPositions: ShipPositions[];
+  turn: string;
 };
 
 export type Ship = {

@@ -12,6 +12,7 @@ export const AVAILABLE_RESPONSES: RESPONSES = {
   UPDATE_ROOM: "update_room",
   CREATE_GAME: "create_game",
   START_GAME: "start_game",
+  TURN: "turn",
 };
 
 export const ERROR_MESSAGES = {

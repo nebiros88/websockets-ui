@@ -17,8 +17,9 @@ export function createRoom(clientConnectionId: string) {
     ],
     game: {
       idGame: clientConnectionId,
-      shipsPositions: []
-    }
+      shipsPositions: [],
+      turn: "",
+    },
   };
 
   rooms.push(newRoom as Room);
@@ -35,9 +36,11 @@ export function addUserToRoom(clientConnectionId: string, request: Request): voi
       rooms[idx]?.roomUsers?.push({ name, index });
       deleteRoom(clientConnectionId);
 
-      if (rooms[idx]?.roomUsers?.length === 2) {
-        createGame(room.roomId);
-      }
+      rooms.forEach((room) => {
+        if (room.roomUsers?.length === 2) {
+          createGame(room.roomId);
+        }
+      });
     }
   });
 }
@@ -56,8 +59,8 @@ export function updateRooms(): void {
       rooms.map((room: Room) => {
         return {
           roomId: room.roomId,
-          roomUsers: room.roomUsers
-        }
+          roomUsers: room.roomUsers,
+        };
       })
     ),
     id: 0,
@@ -96,7 +99,7 @@ export function addShips(request: Request): void {
   rooms[roomIndex]?.game.shipsPositions.push({
     ships: [...ships],
     indexPlayer,
-  })
+  });
 
   if (rooms[roomIndex]?.game.shipsPositions.length === 2) {
     const roomId = rooms[roomIndex]?.roomId;
@@ -110,4 +113,12 @@ function startGame(roomId: string): void {
   const shipsPositions = room.game?.shipsPositions as ShipPositions[];
 
   sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.START_GAME, shipsPositions as ShipPositions[]);
+
+  rooms.map((room) => {
+    if (room.roomId === roomId) {
+      room.game.turn = roomId;
+    }
+  });
+
+  sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { roomId });
 }
