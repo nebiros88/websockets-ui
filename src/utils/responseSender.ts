@@ -3,7 +3,6 @@ import { wsServer } from "../ws-server";
 import { UpdateRoomsResponse, Player, ShipPositions } from "../types/types";
 import { AVAILABLE_RESPONSES } from "../constatnts";
 import { getPlayerById } from "../db/dbPlayers";
-// import { rooms } from "../db/dbRooms";
 
 export function sendResponseForAllClients(response: UpdateRoomsResponse) {
   console.log("Response: ", JSON.stringify(response));
@@ -44,8 +43,6 @@ export function sendResponseForClients(clientList: Player[], responseType: strin
     if (responseType === AVAILABLE_RESPONSES.TURN) {
       const { playerId } = payload;
 
-      // const currentPlayer = rooms.find((room) => room.roomId === roomId)?.game.turn;
-
       response = {
         type: responseType,
         data: JSON.stringify({
@@ -65,6 +62,26 @@ export function sendResponseForClients(clientList: Player[], responseType: strin
           },
           currentPlayer: payload.data.currentPlayer,
           status: payload.data.status,
+        }),
+        id: 0,
+      };
+    }
+
+    if (responseType === AVAILABLE_RESPONSES.FINISH) {
+      response = {
+        type: responseType,
+        data: JSON.stringify({
+          winPlayer: payload.winnerId,
+        }),
+        id: 0,
+      };
+    }
+
+    if (responseType === AVAILABLE_RESPONSES.UPDATE_WINNER) {
+      response = {
+        type: responseType,
+        data: JSON.stringify({
+          payload,
         }),
         id: 0,
       };

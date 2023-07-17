@@ -16,6 +16,8 @@ export type RESPONSES = {
   START_GAME: string;
   TURN: string;
   ATTACK: string;
+  FINISH: string;
+  UPDATE_WINNER: string;
 };
 
 export type Request = {
@@ -64,6 +66,13 @@ export type Game = {
 export type ScoreElement = {
   playerId: string;
   totalPlayerScore: number;
+  shootingMap: ShootData[];
+};
+
+export type ShootData = {
+  x: number;
+  y: number;
+  result: string;
 };
 
 export type Ship = {
@@ -95,3 +104,8 @@ export enum ShotStatus {
   killed,
   shot,
 }
+
+export type Winner = {
+  name: string;
+  wins: number;
+};

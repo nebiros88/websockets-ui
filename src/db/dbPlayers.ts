@@ -3,6 +3,7 @@ import WebSocket from "ws";
 import { Player, Request, PlayerRequestBody, PlayersDb } from "types/types";
 import { ERROR_MESSAGES } from "../constatnts";
 import { updateRooms, updateRoomsOnPlayerDelete } from "./dbRooms";
+import { createWinnerNote } from "./dbWinners";
 
 export let players: PlayersDb = [];
 
@@ -58,6 +59,8 @@ export function createPlayer(ws: WebSocket, clientConnectionId: string, request:
 
   ws.send(JSON.stringify(response));
   updateRooms();
+
+  createWinnerNote(newPlayer);
 }
 
 export function deletePlayer(clientConnectionId: string): void {

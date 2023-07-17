@@ -1,7 +1,8 @@
-import { Room, Player, Request, Ships, ShipPositions, ShipType } from "../types/types";
+import { Room, Player, Request, Ships, ShipPositions, ShipType, ShootData, Ship } from "../types/types";
 import { getPlayerById } from "./dbPlayers";
 import { AVAILABLE_REQUESTS, AVAILABLE_RESPONSES } from "../constatnts";
 import { sendResponseForAllClients, sendResponseForClients } from "../utils";
+import { updateWinners } from "./dbWinners";
 
 export let rooms: Room[] = [];
 
@@ -91,6 +92,7 @@ function createGame(indexRoom: string): void {
     rooms[idx]?.game.playersScore.push({
       playerId: user.index,
       totalPlayerScore: 20,
+      shootingMap: [] as ShootData[],
     });
   });
 
@@ -131,8 +133,6 @@ function startGame(roomId: string): void {
   });
 
   setPlayersTurn(roomId, roomUsers[0]?.index);
-
-  // sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { roomId });
 }
 
 // GAME_PROCESS
@@ -156,6 +156,8 @@ export function randomAttack(request: Request): void {
   attack(requestData);
 }
 
+// Attack
+
 export function attack(request: Request): void {
   const { gameId, x, y, indexPlayer } = JSON.parse(request.data);
 
@@ -171,8 +173,6 @@ export function attack(request: Request): void {
     },
   };
 
-  // const roomIndex = rooms.findIndex((room) => room.roomId === gameId);
-
   rooms.map((room) => {
     if (room.roomId === gameId) {
       const shipsPosition = room.game.shipsPositions.find((el) => el.indexPlayer !== indexPlayer);
@@ -182,22 +182,30 @@ export function attack(request: Request): void {
         const shipLength = SHIPS_LENGTH_MAP[shipType];
 
         if (!ship.direction) {
-          if (x >= ship.position.x && x <= ship.position.x + shipLength - 1) {
+          if (x >= ship.position.x && x <= ship.position.x + shipLength) {
             if (y === ship.position.y) {
               reducePlayerScore(gameId, indexPlayer);
 
               if (shipLength === 1) {
                 result.data.status = "killed";
               }
+
+              if (shipLength > 1) {
+                result.data.status = getShootStatus(gameId, indexPlayer, ship);
+              }
             }
           }
         } else {
           if (x === ship.position.x) {
-            if (y >= ship.position.y && y <= ship.position.y + shipLength - 1) {
+            if (y >= ship.position.y && y <= ship.position.y + shipLength) {
               reducePlayerScore(gameId, indexPlayer);
 
               if (shipLength === 1) {
                 result.data.status = "killed";
+              }
+
+              if (shipLength > 1) {
+                result.data.status = getShootStatus(gameId, indexPlayer, ship);
               }
             }
           }
@@ -210,16 +218,24 @@ export function attack(request: Request): void {
 
   sendResponseForClients(clients, AVAILABLE_RESPONSES.ATTACK, result);
 
+  addShootingNote(gameId, indexPlayer, { x, y, result: result.data.status });
+
+  if (checkGameState(gameId)) {
+    finishGame(gameId, clients, indexPlayer);
+    return;
+  }
+
   // Toggle user's turn
 
   if (result.data.status === "miss") {
     const nextTurnPlayerId = clients.find((player) => player.index !== indexPlayer)?.index;
-    console.log("USER - -- - - - ", nextTurnPlayerId);
     setPlayersTurn(gameId, nextTurnPlayerId);
     return;
   }
   setPlayersTurn(gameId, indexPlayer);
 }
+
+// Reduce players' score
 
 function reducePlayerScore(gameId: string, playerId: string): void {
   const roomIndex = rooms.findIndex((room) => room.roomId === gameId);
@@ -238,6 +254,8 @@ const SHIPS_LENGTH_MAP: ShipType = {
   huge: 4,
 };
 
+// Set players' turn
+
 function setPlayersTurn(roomId: string, playerId: string | undefined): void {
   if (playerId) {
     rooms.map((room) => {
@@ -247,4 +265,77 @@ function setPlayersTurn(roomId: string, playerId: string | undefined): void {
       sendResponseForClients(room.roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { playerId });
     });
   }
+}
+
+function checkGameState(gameId: string): boolean {
+  let result = false;
+
+  rooms.map((room) => {
+    if (room.roomId === gameId) {
+      room.game.playersScore.map((el) => {
+        if (el.totalPlayerScore === 0) result = true;
+      });
+    }
+  });
+
+  return result;
+}
+
+function finishGame(roomId: string, clients: Player[], winnerId: string): void {
+  const winnerName = getPlayerById(winnerId) as Player;
+  sendResponseForClients(clients, AVAILABLE_RESPONSES.FINISH, { winnerId });
+  deleteRoom(roomId);
+  updateWinners(winnerName.name, clients);
+}
+
+function addShootingNote(gameId: string, playerId: string, shootNote: ShootData): void {
+  rooms.map((room) => {
+    if (room.roomId === gameId) {
+      room.game.playersScore.map((el) => {
+        if (el.playerId === playerId) el.shootingMap.push(shootNote);
+      });
+    }
+  });
+}
+
+function getPlayersShootingNotes(gameId: string, playerId: string): ShootData[] {
+  let result = [] as ShootData[];
+  rooms.map((room) => {
+    if (room.roomId === gameId) {
+      room.game.playersScore.map((el) => {
+        if (el.playerId === playerId) {
+          result = el.shootingMap.filter((note) => note.result !== "miss") as ShootData[];
+        }
+      });
+    }
+  });
+  return result;
+}
+
+function getShootStatus(gameId: string, playerId: string, ship: Ship): string {
+  const playerShootingNotes = getPlayersShootingNotes(gameId, playerId);
+  let shootStatus: string = "killed";
+
+  const shipType = ship.type as keyof ShipType;
+  const shipLength = SHIPS_LENGTH_MAP[shipType];
+
+  let shootingMatches = [] as ShootData[];
+
+  playerShootingNotes.map((note) => {
+    if (note.y === ship.position.y) {
+      if (note.x >= ship.position.x && note.x <= ship.position.x + shipLength) {
+        shootingMatches.push(note);
+      }
+    }
+
+    if (note.x === ship.position.x) {
+      if (note.y >= ship.position.y && note.y <= ship.position.y + shipLength) {
+        shootingMatches.push(note);
+      }
+    }
+  });
+
+  if (shootingMatches.length < shipLength - 1) shootStatus = "shot";
+
+  return shootStatus;
 }

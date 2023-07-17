@@ -16,6 +16,8 @@ export const AVAILABLE_RESPONSES: RESPONSES = {
   START_GAME: "start_game",
   TURN: "turn",
   ATTACK: "attack",
+  FINISH: "finish",
+  UPDATE_WINNER: "update_winners",
 };
 
 export const ERROR_MESSAGES = {
