@@ -1,6 +1,6 @@
-import { Room, Player, Request, Ships, ShipPositions } from "../types/types";
+import { Room, Player, Request, Ships, ShipPositions, ShipType } from "../types/types";
 import { getPlayerById } from "./dbPlayers";
-import { AVAILABLE_RESPONSES } from "../constatnts";
+import { AVAILABLE_REQUESTS, AVAILABLE_RESPONSES } from "../constatnts";
 import { sendResponseForAllClients, sendResponseForClients } from "../utils";
 
 export let rooms: Room[] = [];
@@ -19,6 +19,7 @@ export function createRoom(clientConnectionId: string) {
       idGame: clientConnectionId,
       shipsPositions: [],
       turn: "",
+      playersScore: [],
     },
   };
 
@@ -33,7 +34,8 @@ export function addUserToRoom(clientConnectionId: string, request: Request): voi
   rooms.map((room, idx) => {
     if (room.roomId === indexRoom) {
       if (rooms[idx]?.roomUsers?.some((user) => user.index === index)) return;
-      rooms[idx]?.roomUsers?.push({ name, index });
+      const user: Player = { name, index };
+      rooms[idx]?.roomUsers.push(user);
       deleteRoom(clientConnectionId);
 
       rooms.forEach((room) => {
@@ -84,6 +86,14 @@ export function updateRoomsOnPlayerDelete(id: string) {
 
 function createGame(indexRoom: string): void {
   const idx = rooms.findIndex((room) => room.roomId === indexRoom);
+
+  rooms[idx]?.roomUsers?.forEach((user) => {
+    rooms[idx]?.game.playersScore.push({
+      playerId: user.index,
+      totalPlayerScore: 20,
+    });
+  });
+
   sendResponseForClients(rooms[idx]?.roomUsers as Player[], AVAILABLE_RESPONSES.CREATE_GAME, { idGame: indexRoom });
 }
 
@@ -120,5 +130,121 @@ function startGame(roomId: string): void {
     }
   });
 
-  sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { roomId });
+  setPlayersTurn(roomId, roomUsers[0]?.index);
+
+  // sendResponseForClients(roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { roomId });
+}
+
+// GAME_PROCESS
+
+export function randomAttack(request: Request): void {
+  const { gameId, indexPlayer } = JSON.parse(request.data);
+  const x = 0;
+  const y = 1;
+
+  const requestData: Request = {
+    type: AVAILABLE_REQUESTS.RANDOM_ATTACK,
+    data: JSON.stringify({
+      gameId,
+      x,
+      y,
+      indexPlayer,
+    }),
+    id: "0",
+  };
+
+  attack(requestData);
+}
+
+export function attack(request: Request): void {
+  const { gameId, x, y, indexPlayer } = JSON.parse(request.data);
+
+  const result = {
+    type: AVAILABLE_RESPONSES.ATTACK,
+    data: {
+      position: {
+        x,
+        y,
+      },
+      currentPlayer: indexPlayer,
+      status: "miss",
+    },
+  };
+
+  // const roomIndex = rooms.findIndex((room) => room.roomId === gameId);
+
+  rooms.map((room) => {
+    if (room.roomId === gameId) {
+      const shipsPosition = room.game.shipsPositions.find((el) => el.indexPlayer !== indexPlayer);
+
+      shipsPosition?.ships.map((ship) => {
+        const shipType = ship.type as keyof ShipType;
+        const shipLength = SHIPS_LENGTH_MAP[shipType];
+
+        if (!ship.direction) {
+          if (x >= ship.position.x && x <= ship.position.x + shipLength - 1) {
+            if (y === ship.position.y) {
+              reducePlayerScore(gameId, indexPlayer);
+
+              if (shipLength === 1) {
+                result.data.status = "killed";
+              }
+            }
+          }
+        } else {
+          if (x === ship.position.x) {
+            if (y >= ship.position.y && y <= ship.position.y + shipLength - 1) {
+              reducePlayerScore(gameId, indexPlayer);
+
+              if (shipLength === 1) {
+                result.data.status = "killed";
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+
+  const clients = (rooms.find((room) => room.roomId === gameId) as Room).roomUsers;
+
+  sendResponseForClients(clients, AVAILABLE_RESPONSES.ATTACK, result);
+
+  // Toggle user's turn
+
+  if (result.data.status === "miss") {
+    const nextTurnPlayerId = clients.find((player) => player.index !== indexPlayer)?.index;
+    console.log("USER - -- - - - ", nextTurnPlayerId);
+    setPlayersTurn(gameId, nextTurnPlayerId);
+    return;
+  }
+  setPlayersTurn(gameId, indexPlayer);
+}
+
+function reducePlayerScore(gameId: string, playerId: string): void {
+  const roomIndex = rooms.findIndex((room) => room.roomId === gameId);
+
+  rooms[roomIndex]?.game.playersScore.map((player) => {
+    if (player.playerId !== playerId) {
+      player.totalPlayerScore = player.totalPlayerScore - 1;
+    }
+  });
+}
+
+const SHIPS_LENGTH_MAP: ShipType = {
+  small: 1,
+  medium: 2,
+  large: 3,
+  huge: 4,
+};
+
+function setPlayersTurn(roomId: string, playerId: string | undefined): void {
+  if (playerId) {
+    rooms.map((room) => {
+      if (room.roomId === roomId) {
+        room.game.turn = playerId;
+      }
+      sendResponseForClients(room.roomUsers as Player[], AVAILABLE_RESPONSES.TURN, { playerId });
+    });
+  }
 }

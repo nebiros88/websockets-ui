@@ -5,6 +5,8 @@ export const AVAILABLE_REQUESTS: REQUESTS = {
   CREATE_ROOM: "create_room",
   ADD_USER_TO_ROOM: "add_user_to_room",
   ADD_SHIPS: "add_ships",
+  ATTACK: "attack",
+  RANDOM_ATTACK: "randomAttack",
 };
 
 export const AVAILABLE_RESPONSES: RESPONSES = {
@@ -13,6 +15,7 @@ export const AVAILABLE_RESPONSES: RESPONSES = {
   CREATE_GAME: "create_game",
   START_GAME: "start_game",
   TURN: "turn",
+  ATTACK: "attack",
 };
 
 export const ERROR_MESSAGES = {

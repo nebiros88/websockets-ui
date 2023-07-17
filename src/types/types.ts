@@ -5,6 +5,8 @@ export type REQUESTS = {
   CREATE_ROOM: string;
   ADD_USER_TO_ROOM: string;
   ADD_SHIPS: string;
+  ATTACK: string;
+  RANDOM_ATTACK: string;
 };
 
 export type RESPONSES = {
@@ -13,6 +15,7 @@ export type RESPONSES = {
   CREATE_GAME: string;
   START_GAME: string;
   TURN: string;
+  ATTACK: string;
 };
 
 export type Request = {
@@ -41,7 +44,7 @@ export type Client = {
 
 export type Room = {
   roomId: string;
-  roomUsers: Player[] | null;
+  roomUsers: Player[];
   game: Game;
 };
 
@@ -55,6 +58,12 @@ export type Game = {
   idGame: number | string;
   shipsPositions: ShipPositions[];
   turn: string;
+  playersScore: ScoreElement[];
+};
+
+export type ScoreElement = {
+  playerId: string;
+  totalPlayerScore: number;
 };
 
 export type Ship = {
@@ -64,15 +73,15 @@ export type Ship = {
   };
   direction: boolean;
   length: number;
-  type: ShipType;
+  type: string;
 };
 
-export enum ShipType {
-  small,
-  medium,
-  large,
-  huge,
-}
+export type ShipType = {
+  small: number;
+  medium: number;
+  large: number;
+  huge: number;
+};
 
 export type Ships = Ship[];
 
@@ -80,3 +89,9 @@ export type ShipPositions = {
   ships: Ships;
   indexPlayer: string;
 };
+
+export enum ShotStatus {
+  miss,
+  killed,
+  shot,
+}
