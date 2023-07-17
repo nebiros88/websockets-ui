@@ -139,8 +139,8 @@ function startGame(roomId: string): void {
 
 export function randomAttack(request: Request): void {
   const { gameId, indexPlayer } = JSON.parse(request.data);
-  const x = 0;
-  const y = 1;
+  const x = Math.floor(Math.random() * 10);
+  const y = Math.floor(Math.random() * 10);
 
   const requestData: Request = {
     type: AVAILABLE_REQUESTS.RANDOM_ATTACK,
